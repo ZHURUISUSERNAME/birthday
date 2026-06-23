@@ -1,298 +1,531 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>生日快乐 · xiao黎</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;1,400&display=swap');
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>生日快乐 · 小黎</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #060a1a;
+            font-family: 'PingFang SC', 'Helvetica Neue', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+            touch-action: none;
+            /* 防止触屏滚动/缩放干扰 */;
+        }
 
-    :root {
-      --blush:   #F2C4C4;
-      --rose:    #D97B8A;
-      --peach:   #F7E0D0;
-      --cream:   #FDF6EF;
-      --brown:   #7A4F4F;
-      --gold:    #C9956B;
-    }
+        /* ─── Canvas 背景层 ─── */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            display: block;
+        }
 
-    html, body {
-      width: 100%; height: 100%;
-      overflow-x: hidden;
-    }
+        /* ─── 文字叠加层 ─── */
+        .content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            pointer-events: none;
+            /* 让点击穿透到 canvas，但文字本身不阻挡交互 */;
+        }
 
-    body {
-      background: var(--cream);
-      font-family: 'Noto Serif SC', serif;
-      color: var(--brown);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        /* 但我们需要文字内部可点吗？不需要，所有交互在 canvas 上处理 */
+        /* 为了让文字更清晰，用 pointer-events: none 让所有点击落到 canvas */
 
-    /* ── Canvas for petals ── */
-    #petal-canvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
+        .name {
+            font-size: clamp(56px, 14vw, 96px);
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            background: linear-gradient(135deg, #f9e7b3 0%, #f5d78e 30%, #e8b86d 60%, #f0d080 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(245, 215, 142, 0.25), 0 0 80px rgba(232, 184, 109, 0.15);
+            line-height: 1.2;
+            margin-bottom: 8px;
+            animation: glowPulse 3s ease-in-out infinite alternate;
+        }
 
-    /* ── Main card ── */
-    .card {
-      position: relative;
-      z-index: 1;
-      width: min(420px, 92vw);
-      margin: 8vh auto 6vh;
-      background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(8px);
-      border-radius: 28px;
-      padding: 48px 36px 52px;
-      box-shadow:
-        0 4px 32px rgba(217,123,138,0.13),
-        0 1px 4px rgba(201,149,107,0.08);
-      text-align: center;
-      animation: floatIn 1.2s cubic-bezier(.22,1,.36,1) both;
-    }
+        @keyframes glowPulse {
+            0% {
+                filter: drop-shadow(0 0 20px rgba(245, 215, 142, 0.2));
+            }
+            100% {
+                filter: drop-shadow(0 0 50px rgba(245, 215, 142, 0.45));
+            }
+        }
 
-    @keyframes floatIn {
-      from { opacity: 0; transform: translateY(36px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+        .sub {
+            font-size: clamp(18px, 4.5vw, 32px);
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.85);
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 30px rgba(150, 180, 255, 0.15);
+            margin-top: 4px;
+            margin-bottom: 18px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 40%, rgba(200, 215, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    /* ── Decorative top ornament ── */
-    .ornament {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-    .ornament-line {
-      width: 48px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--blush));
-    }
-    .ornament-line.right {
-      background: linear-gradient(90deg, var(--blush), transparent);
-    }
-    .ornament-flower {
-      font-size: 22px;
-      animation: spinSlow 8s linear infinite;
-    }
-    @keyframes spinSlow {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
+        .wish {
+            font-size: clamp(15px, 3.6vw, 22px);
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.08em;
+            line-height: 1.8;
+            text-shadow: 0 0 20px rgba(100, 140, 255, 0.08);
+            max-width: 420px;
+            padding: 0 10px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 30%, rgba(210, 225, 255, 0.5) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    /* ── Name ── */
-    .name-label {
-      font-size: 11px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 6px;
-    }
-    .name {
-      font-family: 'Playfair Display', 'Noto Serif SC', serif;
-      font-size: clamp(34px, 10vw, 46px);
-      font-weight: 400;
-      font-style: italic;
-      color: var(--rose);
-      line-height: 1.15;
-      margin-bottom: 22px;
-      text-shadow: 0 2px 16px rgba(217,123,138,0.18);
-      animation: fadeUp 1.4s 0.3s cubic-bezier(.22,1,.36,1) both;
-    }
+        /* 底部小装饰 — 不用文字 */
+        .footer-dots {
+            position: fixed;
+            bottom: 28px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 1;
+            pointer-events: none;
+            font-size: 12px;
+            letter-spacing: 10px;
+            color: rgba(255, 255, 255, 0.12);
+        }
+        .footer-dots span {
+            display: inline-block;
+            animation: dotFade 2.4s ease-in-out infinite alternate;
+        }
+        .footer-dots span:nth-child(2) {
+            animation-delay: 0.6s;
+        }
+        .footer-dots span:nth-child(3) {
+            animation-delay: 1.2s;
+        }
+        .footer-dots span:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+        .footer-dots span:nth-child(5) {
+            animation-delay: 0.9s;
+        }
+        @keyframes dotFade {
+            0% {
+                opacity: 0.2;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 0.9;
+                transform: scale(1.2);
+            }
+        }
 
-    /* ── Divider ── */
-    .divider {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin: 0 auto 22px;
-      width: 80%;
-    }
-    .div-line {
-      flex: 1; height: 1px;
-      background: var(--blush);
-    }
-    .div-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--rose); }
+        /* 适配极小屏 */
+        @media (max-width: 380px) {
+            .name {
+                font-size: 42px;
+            }
+            .sub {
+                font-size: 16px;
+            }
+            .wish {
+                font-size: 13px;
+            }
+        }
 
-    /* ── Birthday headline ── */
-    .headline {
-      font-size: clamp(20px, 5.5vw, 26px);
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      color: var(--brown);
-      margin-bottom: 20px;
-      animation: fadeUp 1.4s 0.5s cubic-bezier(.22,1,.36,1) both;
-    }
-
-    /* ── Wish text ── */
-    .wish {
-      font-size: clamp(16px, 4.2vw, 19px);
-      font-weight: 300;
-      color: var(--gold);
-      line-height: 1.9;
-      letter-spacing: 0.04em;
-      margin-bottom: 36px;
-      animation: fadeUp 1.4s 0.7s cubic-bezier(.22,1,.36,1) both;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Candle row ── */
-    .candles {
-      display: flex;
-      justify-content: center;
-      gap: 14px;
-      margin-bottom: 32px;
-    }
-    .candle {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      animation: fadeUp 1.4s 0.9s cubic-bezier(.22,1,.36,1) both;
-    }
-    .flame {
-      font-size: 22px;
-      animation: flicker 1.4s ease-in-out infinite alternate;
-    }
-    .candle:nth-child(2) .flame { animation-delay: 0.2s; }
-    .candle:nth-child(3) .flame { animation-delay: 0.4s; }
-    @keyframes flicker {
-      from { transform: scaleY(1)   rotate(-3deg); opacity: 0.9; }
-      to   { transform: scaleY(1.1) rotate(3deg);  opacity: 1; }
-    }
-    .stick {
-      width: 10px; height: 40px;
-      background: linear-gradient(180deg, var(--blush), var(--rose));
-      border-radius: 5px 5px 3px 3px;
-    }
-
-    /* ── Bottom stamp ── */
-    .stamp {
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      color: var(--blush);
-    }
-
-    /* ── Heart burst on tap ── */
-    .heart-burst {
-      position: fixed;
-      font-size: 24px;
-      pointer-events: none;
-      z-index: 999;
-      animation: burst 0.9s ease-out forwards;
-    }
-    @keyframes burst {
-      0%   { opacity: 1; transform: scale(0.5) translateY(0); }
-      100% { opacity: 0; transform: scale(1.4) translateY(-60px); }
-    }
-  </style>
+        /* 适配大屏 / 平板 */
+        @media (min-width: 768px) {
+            .name {
+                font-size: 100px;
+            }
+            .sub {
+                font-size: 34px;
+            }
+            .wish {
+                font-size: 24px;
+                max-width: 560px;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<canvas id="petal-canvas"></canvas>
+    <!-- Canvas 背景 -->
+    <canvas id="bg-canvas"></canvas>
 
-<div class="card">
-  <div class="ornament">
-    <div class="ornament-line"></div>
-    <div class="ornament-flower">🌸</div>
-    <div class="ornament-line right"></div>
-  </div>
+    <!-- 文字内容 -->
+    <div class="content">
+        <div class="name">小黎</div>
+        <div class="sub">✨ 祝你生日快乐 ✨</div>
+        <div class="wish">愿你越来越漂亮，每天都很开心快乐 🌊</div>
+    </div>
 
-  <div class="name-label">Happy Birthday to</div>
-  <div class="name">xiao黎</div>
+    <!-- 底部装饰点 -->
+    <div class="footer-dots">
+        <span>✦</span>
+        <span>✦</span>
+        <span>✦</span>
+        <span>✦</span>
+        <span>✦</span>
+    </div>
 
-  <div class="divider">
-    <div class="div-line"></div>
-    <div class="div-dot"></div>
-    <div class="div-line"></div>
-  </div>
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  星辰大海 · 生日祝福
+        //  交互：点击/触摸任意位置 → 星爆粒子
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  <div class="headline">生日快乐 🎂</div>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
 
-  <div class="wish">
-    祝你越来越漂亮<br>
-    愿每一天都温柔以待 🌷
-  </div>
+        let W, H;
 
-  <div class="candles">
-    <div class="candle"><div class="flame">🔥</div><div class="stick"></div></div>
-    <div class="candle"><div class="flame">🔥</div><div class="stick"></div></div>
-    <div class="candle"><div class="flame">🔥</div><div class="stick"></div></div>
-  </div>
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', () => {
+            resize();
+            // 星星位置按比例重新分布
+            stars.forEach(s => {
+                s.x = Math.random() * W;
+                s.y = Math.random() * H;
+            });
+        });
 
-  <div class="stamp">✦ &nbsp; 专属祝福 &nbsp; ✦</div>
-</div>
+        // ─── 工具 ──────────────────────────────────────────
+        function rand(min, max) { return Math.random() * (max - min) + min; }
 
-<script>
-// ── Falling petals ──
-const canvas = document.getElementById('petal-canvas');
-const ctx = canvas.getContext('2d');
+        function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
 
-function resize() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
+        function lerp(a, b, t) { return a + (b - a) * t; }
 
-const PETAL_EMOJIS = ['🌸','🌺','🌷','✿','❀'];
-const petals = Array.from({ length: 28 }, () => ({
-  x: Math.random() * window.innerWidth,
-  y: Math.random() * -window.innerHeight,
-  size: 14 + Math.random() * 14,
-  speed: 0.6 + Math.random() * 1.0,
-  drift: (Math.random() - 0.5) * 0.7,
-  spin: (Math.random() - 0.5) * 0.04,
-  angle: Math.random() * Math.PI * 2,
-  emoji: PETAL_EMOJIS[Math.floor(Math.random() * PETAL_EMOJIS.length)],
-  opacity: 0.55 + Math.random() * 0.45,
-}));
+        function dist(x1, y1, x2, y2) {
+            return Math.hypot(x2 - x1, y2 - y1);
+        }
 
-function drawPetals() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  petals.forEach(p => {
-    ctx.save();
-    ctx.globalAlpha = p.opacity;
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.angle);
-    ctx.font = `${p.size}px serif`;
-    ctx.fillText(p.emoji, -p.size / 2, p.size / 2);
-    ctx.restore();
-    p.y += p.speed;
-    p.x += p.drift;
-    p.angle += p.spin;
-    if (p.y > canvas.height + 20) {
-      p.y = -20;
-      p.x = Math.random() * canvas.width;
-    }
-  });
-  requestAnimationFrame(drawPetals);
-}
-drawPetals();
+        // ─── 颜色调色板（星爆用） ──────────────────────
+        const BURST_COLORS = [
+            '#F9E7B3', '#F5D78E', '#E8B86D', '#F0D080', // 金色系
+            '#FFB3C6', '#FF8A9B', '#F2A6C4', // 粉色系
+            '#7EC8E3', '#4FA8D1', '#A8D8EA', // 蓝色系
+            '#C9B1FF', '#A88BEB', '#D4C4FF', // 紫色系
+            '#FFFFFF', '#FFF5E6', // 白色
+        ];
 
-// ── Heart burst on tap/click ──
-document.addEventListener('click', e => {
-  const el = document.createElement('div');
-  el.className = 'heart-burst';
-  el.textContent = ['💕','🌸','💖','✨'][Math.floor(Math.random()*4)];
-  el.style.left = (e.clientX - 16) + 'px';
-  el.style.top  = (e.clientY - 16) + 'px';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 900);
-});
-</script>
+        function randomBurstColor() {
+            return BURST_COLORS[randInt(0, BURST_COLORS.length - 1)];
+        }
+
+        // ─── 星星 ──────────────────────────────────────────
+        const STAR_COUNT = 280;
+        let stars = [];
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < STAR_COUNT; i++) {
+                stars.push({
+                    x: rand(0, W),
+                    y: rand(0, H),
+                    radius: rand(0.5, 2.2),
+                    baseOpacity: rand(0.3, 0.95),
+                    phase: rand(0, Math.PI * 2),
+                    speed: rand(0.008, 0.025),
+                    // 轻微颜色变化：白 -> 淡蓝/淡金
+                    hue: randInt(-10, 20),
+                });
+            }
+        }
+        initStars();
+
+        // ─── 流星 ──────────────────────────────────────────
+        let meteors = [];
+
+        function spawnMeteor() {
+            // 从屏幕顶部区域随机起始
+            const x = rand(0, W * 0.8);
+            const y = rand(-H * 0.2, H * 0.3);
+            const angle = rand(-0.6, -0.15); // 向左下倾斜
+            const speed = rand(6, 14);
+            const len = rand(60, 140);
+            meteors.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                length: len,
+                life: 1.0, // 从1衰减到0
+                decay: rand(0.003, 0.008),
+            });
+        }
+
+        // 每 4~9 秒生成一颗流星
+        let meteorTimer = 0;
+
+        function updateMeteorTimer(delta) {
+            meteorTimer += delta;
+            if (meteorTimer > rand(4, 9) && meteors.length < 5) {
+                spawnMeteor();
+                meteorTimer = 0;
+            }
+        }
+
+        // ─── 星爆粒子 ──────────────────────────────────────
+        let burstParticles = [];
+
+        function triggerBurst(cx, cy) {
+            const count = randInt(32, 52);
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                colors.push(randomBurstColor());
+            }
+            for (let i = 0; i < count; i++) {
+                const angle = rand(0, Math.PI * 2);
+                const speed = rand(1.5, 8.5);
+                const size = rand(2.5, 6.5);
+                burstParticles.push({
+                    x: cx,
+                    y: cy,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - rand(0, 0.5),
+                    radius: size,
+                    color: colors[i % colors.length],
+                    life: 1.0,
+                    decay: rand(0.006, 0.018),
+                    // 拖尾效果用 trail 存储上一帧位置
+                    trailX: cx,
+                    trailY: cy,
+                });
+            }
+            // 额外加几个大粒子
+            for (let i = 0; i < 6; i++) {
+                const angle = rand(0, Math.PI * 2);
+                const speed = rand(1.0, 4.0);
+                burstParticles.push({
+                    x: cx,
+                    y: cy,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - rand(0, 0.3),
+                    radius: rand(8, 14),
+                    color: '#FFFFFF',
+                    life: 1.0,
+                    decay: rand(0.004, 0.012),
+                    trailX: cx,
+                    trailY: cy,
+                });
+            }
+        }
+
+        // ─── 主循环 ────────────────────────────────────────
+        let lastTime = 0;
+
+        function loop(time) {
+            const delta = lastTime ? Math.min((time - lastTime) / 16.667, 3) : 1;
+            lastTime = time;
+
+            // 1. 清空
+            ctx.clearRect(0, 0, W, H);
+
+            // 2. 绘制渐变背景（深空）
+            const grad = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.4, Math.max(W, H) * 0.9);
+            grad.addColorStop(0, '#0e1a3a');
+            grad.addColorStop(0.4, '#0a0e27');
+            grad.addColorStop(0.8, '#060918');
+            grad.addColorStop(1, '#02040a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // 3. 绘制星星（带闪烁）
+            const now = performance.now() / 1000;
+            stars.forEach(s => {
+                const opacity = s.baseOpacity * (0.6 + 0.4 * Math.sin(now * s.speed * 8 + s.phase));
+                const r = s.radius * (0.85 + 0.15 * Math.sin(now * s.speed * 6 + s.phase * 1.3));
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+                // 颜色微调：白中带淡蓝/淡金
+                const bright = Math.floor(200 + 55 * opacity);
+                const rVal = Math.min(bright + s.hue * 0.4, 255);
+                const gVal = Math.min(bright + s.hue * 0.2, 255);
+                const bVal = Math.min(bright - s.hue * 0.2, 255);
+                ctx.fillStyle = `rgba(${rVal|0}, ${gVal|0}, ${bVal|0}, ${opacity})`;
+                ctx.fill();
+                // 小星星加光晕
+                if (s.radius > 1.6 && opacity > 0.6) {
+                    ctx.shadowColor = `rgba(200, 220, 255, ${opacity * 0.2})`;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, r * 0.3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.15})`;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            // 4. 绘制流星
+            for (let i = meteors.length - 1; i >= 0; i--) {
+                const m = meteors[i];
+                m.x += m.vx * delta;
+                m.y += m.vy * delta;
+                m.life -= m.decay * delta;
+                if (m.life <= 0 || m.x > W + 100 || m.y > H + 100 || m.x < -100 || m.y < -100) {
+                    meteors.splice(i, 1);
+                    continue;
+                }
+                const alpha = m.life * 0.9;
+                const len = m.length * (0.5 + 0.5 * m.life);
+                const endX = m.x - m.vx / Math.hypot(m.vx, m.vy) * len;
+                const endY = m.y - m.vy / Math.hypot(m.vx, m.vy) * len;
+                const gradM = ctx.createLinearGradient(m.x, m.y, endX, endY);
+                gradM.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+                gradM.addColorStop(0.3, `rgba(220, 235, 255, ${alpha * 0.6})`);
+                gradM.addColorStop(1, `rgba(180, 200, 255, 0)`);
+                ctx.beginPath();
+                ctx.moveTo(m.x, m.y);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = gradM;
+                ctx.lineWidth = 2.2 * m.life + 0.6;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                // 流星头部光晕
+                ctx.shadowColor = `rgba(200, 220, 255, ${alpha * 0.4})`;
+                ctx.shadowBlur = 28;
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, 3.5 * m.life, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.7})`;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // 5. 更新流星计时器
+            updateMeteorTimer(delta);
+
+            // 6. 绘制星爆粒子
+            for (let i = burstParticles.length - 1; i >= 0; i--) {
+                const p = burstParticles[i];
+                p.x += p.vx * delta;
+                p.y += p.vy * delta;
+                p.vy += 0.04 * delta; // 微重力
+                p.vx *= 0.995;
+                p.vy *= 0.995;
+                p.life -= p.decay * delta;
+                if (p.life <= 0) {
+                    burstParticles.splice(i, 1);
+                    continue;
+                }
+                const alpha = p.life;
+                const radius = p.radius * (0.4 + 0.6 * p.life);
+                // 发光拖尾
+                ctx.shadowColor = p.color + '40';
+                ctx.shadowBlur = 18 * p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = alpha;
+                ctx.fill();
+                // 核心高亮
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius * 0.35, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.globalAlpha = alpha * 0.5;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
+            }
+
+            // 7. 如果星爆粒子数量很多，稍微限制一下防止性能问题
+            if (burstParticles.length > 600) {
+                burstParticles.splice(0, burstParticles.length - 600);
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // ─── 交互：点击 / 触摸 ────────────────────────────
+        function handlePointer(e) {
+            e.preventDefault();
+            let cx, cy;
+            if (e.touches) {
+                const t = e.touches[0] || e.changedTouches[0];
+                cx = t.clientX;
+                cy = t.clientY;
+            } else {
+                cx = e.clientX;
+                cy = e.clientY;
+            }
+            // 触发星爆
+            triggerBurst(cx, cy);
+            // 额外小惊喜：如果点击位置靠近文字，增加更多粒子
+            const rect = canvas.getBoundingClientRect();
+            const relX = cx - rect.left;
+            const relY = cy - rect.top;
+            // 检查是否在屏幕中央区域（文字区域）
+            const centerX = W / 2;
+            const centerY = H / 2 - 20;
+            if (dist(relX, relY, centerX, centerY) < Math.min(W, H) * 0.35) {
+                // 靠近文字 → 额外再来一波
+                setTimeout(() => {
+                    triggerBurst(cx + rand(-30, 30), cy + rand(-30, 30));
+                }, 80);
+            }
+        }
+
+        // 鼠标
+        canvas.addEventListener('click', handlePointer);
+        // 触摸
+        canvas.addEventListener('touchstart', handlePointer, { passive: false });
+        // 防止 context menu
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        // ─── 启动 ──────────────────────────────────────────
+        requestAnimationFrame(loop);
+
+        // 启动后立刻来两颗流星
+        setTimeout(() => { spawnMeteor(); }, 300);
+        setTimeout(() => { spawnMeteor(); }, 1200);
+
+        // 每过一会儿自动来一波小星爆？（不，让用户主动触发）
+
+        // ─── 窗口变化时重新调整 ──────────────────────────
+        window.addEventListener('resize', () => {
+            // 星星已在 resize 中重新分布
+        });
+
+        // ─── 额外小惊喜：页面加载后3秒在中央自动爆一次 ──
+        setTimeout(() => {
+            triggerBurst(W / 2, H / 2 - 30);
+            setTimeout(() => {
+                triggerBurst(W / 2 - 60, H / 2 - 10);
+                triggerBurst(W / 2 + 60, H / 2 - 10);
+            }, 200);
+        }, 600);
+
+        console.log('✨ 小黎，生日快乐！点击屏幕有惊喜 ✨');
+    </script>
 </body>
 </html>
